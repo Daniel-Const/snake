@@ -9,6 +9,8 @@ use std::{
     }
 };
 
+use rand::Rng;
+
 use termion::{
     event::Key,
     input::TermRead,
@@ -28,7 +30,8 @@ enum Direction {
 struct Snake {
     size: usize,
     direction: Direction,
-    positions: VecDeque<(usize, usize)>
+    positions: VecDeque<(usize, usize)>,
+    grow: usize,
 }
 
 impl Snake {
@@ -38,17 +41,29 @@ impl Snake {
         return Snake {
             size: 2,
             direction: Direction::DOWN,
-            positions: VecDeque::from([(x, y), (x, y-1)])
+            positions: VecDeque::from([(x, y), (x, y-1)]),
+            grow: 0
         }
+    }
+
+    fn grow(&mut self) {
+        self.grow += 1;
     }
 
     fn move_position(&mut self, board: &Board) -> (usize, usize) {
         let tail_pos: (usize, usize);
         // Get the tail position
-        if let Some(tail) = self.positions.remove(0) {
-            tail_pos = tail;
+        if let Some(tail) = self.positions.front() {
+            tail_pos = *tail;
         } else {
             tail_pos = (0, 0); // Handle better?
+        }
+        
+        // If still growing do not remove tail from current position
+        if self.grow > 0 {
+            self.grow -= 1; 
+        } else {
+            self.positions.remove(0);
         }
 
         if let Some((mut x, mut y)) = self.positions.back() {
@@ -109,14 +124,20 @@ impl Board {
         self.cells[y][x] = '.';
         for position in snake.positions.iter() {
             let (x, y) = position;
-            self.cells[*y][*x] = 'o';
+            self.cells[*y][*x] = '■';
         }
+    }
+
+    fn draw_fruit(&mut self, fruit_position: (usize, usize)) {
+        let (x, y) = fruit_position;
+        self.cells[y][x] = 'x';
     }
 }
 
 struct Game {
     board: Board,
-    snake: Snake
+    snake: Snake,
+    fruit_position: (usize, usize)
 }
 
 impl Game {
@@ -134,7 +155,7 @@ impl Game {
 
         for row in 0..self.board.height {
             write!(stdout, "\r").unwrap();
-            let line: String = self.board.cells[row].iter().map(|ch| format!(" {ch} ", ch=ch)).collect();
+            let line: String = self.board.cells[row].iter().map(|ch| format!("{ch} ", ch=ch)).collect();
             write!(stdout, "{line}\n").unwrap();
         }
 
@@ -143,14 +164,14 @@ impl Game {
         stdout.flush().unwrap();
     }
 
-    fn init(&mut self) {
-        self.board.draw_snake(&self.snake, (0,0));
-    }
+
 
     fn step(&mut self) {
         /* Move the snakes position and update the board */
         let old_pos = self.snake.move_position(&self.board);
         self.board.draw_snake(&self.snake, old_pos);
+        self.check_fruit();
+        self.board.draw_fruit(self.fruit_position);
     }
 
     fn keyboard_action(&mut self, key: termion::event::Key) {
@@ -171,12 +192,33 @@ impl Game {
             _ => ()
         }
     }
+
+    fn new_fruit_position(&mut self) {
+        let mut rng = rand::thread_rng();
+        let x: usize = rng.gen_range(0..self.board.width);
+        let y: usize = rng.gen_range(0..self.board.height);
+        self.fruit_position = (x, y);
+    }
+
+    fn check_fruit(&mut self) {
+        // Check if fruit in snake positions
+        if self.snake.positions.contains(&self.fruit_position) {
+            self.new_fruit_position();
+            self.snake.grow();
+        }
+    }
+
+    fn init(&mut self) {
+        self.new_fruit_position();
+        self.board.draw_fruit(self.fruit_position);
+        self.board.draw_snake(&self.snake, (0,0));
+    }
 }
 
 fn main() {
     let board = Board::new(20, 20);
     let snake = Snake::new(&board);
-    let mut game = Game {board, snake};
+    let mut game = Game {board, snake, fruit_position: (0,0)};
     game.init();
 
     let stdin: AsyncReader = async_stdin();

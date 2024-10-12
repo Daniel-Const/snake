@@ -8,4 +8,10 @@ CLI Snake game :)
 > cargo run
 ```
 
+## TODO
+
+- Implement fruit spawning in randomly
+- Track / Print score
+- Grow snake upon collecting fruit
+
 
