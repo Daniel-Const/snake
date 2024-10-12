@@ -10,8 +10,7 @@ CLI Snake game :)
 
 ## TODO
 
-- Implement fruit spawning in randomly
 - Track / Print score
-- Grow snake upon collecting fruit
+- Handle lose condition + restart
 
 
