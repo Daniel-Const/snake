@@ -2,15 +2,14 @@ use std::{
     collections::VecDeque,
     thread,
     time,
+    time::Duration,
     io::{
         stdout,
         Stdout,
         Write
     }
 };
-
 use rand::Rng;
-
 use termion::{
     event::Key,
     input::TermRead,
@@ -18,6 +17,11 @@ use termion::{
     async_stdin,
     AsyncReader,
 };
+
+const SNAKE_CHAR: char = '■';
+const BG_CHAR: char = '.';
+const FRUIT_CHAR: char = 'x';
+const FRAME_DELAY: Duration = time::Duration::from_millis(80);
 
 #[derive(Clone, Copy)]
 enum Direction {
@@ -113,7 +117,7 @@ impl Board {
         let board = Board {
             height,
             width,
-            cells: vec![vec!['.'; width]; height]
+            cells: vec![vec![BG_CHAR; width]; height]
         };
 
         return board;
@@ -121,16 +125,16 @@ impl Board {
 
     fn draw_snake(&mut self, snake: &Snake, old_position: (usize, usize)) {
         let (x, y) = old_position;
-        self.cells[y][x] = '.';
+        self.cells[y][x] = BG_CHAR;
         for position in snake.positions.iter() {
             let (x, y) = position;
-            self.cells[*y][*x] = '■';
+            self.cells[*y][*x] = SNAKE_CHAR;
         }
     }
 
     fn draw_fruit(&mut self, fruit_position: (usize, usize)) {
         let (x, y) = fruit_position;
-        self.cells[y][x] = 'x';
+        self.cells[y][x] = FRUIT_CHAR;
     }
 }
 
@@ -240,6 +244,6 @@ fn main() {
         }
         game.step();
         game.print(&stdout);
-        thread::sleep(hundred_millis);
+        thread::sleep(FRAME_DELAY);
     }
 }
