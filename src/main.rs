@@ -229,8 +229,6 @@ fn main() {
     let stdout = stdout().into_raw_mode().unwrap();
     let mut keys = stdin.keys();
 
-    let hundred_millis = time::Duration::from_millis(100);
-
     loop {
         let result = keys.next();
         match result {
