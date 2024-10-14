@@ -2,6 +2,8 @@
 
 CLI Snake game :)
 
+![alt text](./public/demo.png)
+
 ## Get started
 
 ```bash
