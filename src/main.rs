@@ -146,7 +146,7 @@ struct Game {
 
 impl Game {
     fn print(&self, mut stdout: &Stdout) {
-        // Control char: Clear terminal output
+        // Clear terminal output and print board
         write!(
             stdout,
             "{}{}{}",
@@ -155,7 +155,6 @@ impl Game {
             termion::cursor::Hide
         )
         .unwrap();
-        stdout.flush().unwrap();
 
         for row in 0..self.board.height {
             write!(stdout, "\r").unwrap();
